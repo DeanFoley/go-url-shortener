@@ -1,19 +1,14 @@
 package main
 
 import (
+	"DeanFoleyDev/go-url-shortener/cmd/handlers"
 	"log"
 	"net/http"
 )
 
-var (
-	baseURL string
-)
-
 func main() {
-	baseURL = "https://df.dv/"
-
-	http.HandleFunc("/shorten/", shortenURLHandler)
-	http.HandleFunc("/longen/", retrieveFullURLHandler)
+	http.HandleFunc("/shorten/", handlers.ShortenURLHandler)
+	http.HandleFunc("/longen/", handlers.RetrieveFullURLHandler)
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

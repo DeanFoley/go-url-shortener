@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"encoding/json"
@@ -12,7 +12,7 @@ import (
 
 // POST /shorten/ { "url": string }
 // Returns a shortened URL for a given long URL
-func shortenURLHandler(w http.ResponseWriter, r *http.Request) {
+func ShortenURLHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		fmt.Fprintf(w, "Incorrect REST method: %s, please use POST.", r.Method)
 		return
@@ -26,13 +26,13 @@ func shortenURLHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	shortenedURL := baseURL + app.URLShortener(request.URL)
+	shortenedLink := app.URLShortener()
 
-	go db.Store(request.URL, shortenedURL)
+	go db.Store(request.URL, shortenedLink)
 
 	var response = data.Response{
 		LongURL:  request.URL,
-		ShortURL: shortenedURL,
+		ShortURL: BaseURL + shortenedLink,
 	}
 
 	jsonRes, err := json.Marshal(response)

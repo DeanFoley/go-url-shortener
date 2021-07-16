@@ -15,7 +15,7 @@ func init() {
 	seed = rand.New(rand.NewSource(time.Now().UnixNano()))
 }
 
-func URLShortener(request string) string {
+func URLShortener() string {
 	url := make([]byte, 16)
 
 	for i, _ := range url {
