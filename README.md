@@ -24,13 +24,13 @@ Comes with a CLI which can be used to call your service.
 
 | handler name | ns/op | bytes/op | allocs/op |
 |----|----|----|----|
-| shortenURLHandler | 276002 | 24990 | 141 |
+| shortenURLHandler | 259277 | 18716 | 136 |
 | retrieveURLHandler | 289681 | 18245 | 131 |
 
 ### App
 
 | app name | ns/op | bytes/op | allocs/op |
 |----|----|----|----|
-| stripURL | 0.3371 | 0 | 0 |
-| urlShortener | 327.4 | 16 | 1 |
-| validateShortURL | 10.04 | 0 | 0 |
+| stripURL | 2854 | 105 | 0 |
+| urlShortener | 705.7 | 16 | 1 |
+| validateShortURL | 226.2 | 0 | 0 |

@@ -5,9 +5,10 @@ import (
 	"strings"
 )
 
-func ValidateShortURL(baseURL, url string) error {
+func ValidateShortURL(baseURL, url string, resultChan chan error) {
 	if !strings.Contains(url, baseURL) {
-		return fmt.Errorf("URL is not valid for this service")
+		resultChan <- fmt.Errorf("URL is not valid for this service")
+		return
 	}
-	return nil
+	resultChan <- nil
 }

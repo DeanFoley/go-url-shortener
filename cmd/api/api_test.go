@@ -1,22 +1,34 @@
-package handlers
+package api
 
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
-	"DeanFoleyDev/go-url-shortener/internal/app"
 	"DeanFoleyDev/go-url-shortener/internal/data"
 	"DeanFoleyDev/go-url-shortener/internal/db"
+
+	"github.com/gorilla/mux"
 )
 
-func TestMain(t *testing.T) {
+func TestMain(m *testing.M) {
+	stubMux := mux.NewRouter()
 
+	stubMux.HandleFunc("/{short}", RetrieveFullURLHandler)
+	stubMux.HandleFunc("shorten", ShortenURLHandler)
+
+	stubServer := httptest.NewServer(stubMux)
+
+	BaseURL = stubServer.URL
+
+	os.Exit(m.Run())
 }
 
-// Accepts a URL to be shortened
 func Test_ShortenURLHandler(t *testing.T) {
 	request := data.Request{
 		URL: "https://www.lush.com/uk/en/p/good-karma-everybody-needs-some-shower-gel",
@@ -61,78 +73,54 @@ func Benchmark_ShortenURLHandler(b *testing.B) {
 	}
 
 	b.ResetTimer()
-
 	for n := 0; n < b.N; n++ {
 		resp, err := cl.Post(ts.URL, "application/json", bytes.NewBuffer(body))
 		if err != nil {
 			b.Fatalf("Error posting request: %v", err)
 		}
-		defer resp.Body.Close()
+		resp.Body.Close()
 	}
 }
 
 func Test_RetrieveFullURLHandler(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(RetrieveFullURLHandler))
-	defer ts.Close()
-
-	tr := &http.Transport{}
-	defer tr.CloseIdleConnections()
-	cl := &http.Client{
-		Transport: tr,
-	}
+	writer := httptest.NewRecorder()
 
 	longURL := "https://www.lush.com/uk/en/p/good-karma-everybody-needs-some-shower-gel"
-	shortened := app.URLShortener()
+	shortened := "1234567890abcdef"
 
-	db.Store(longURL, shortened)
+	request := httptest.NewRequest("GET", fmt.Sprintf("%s/%s", BaseURL, shortened), nil)
 
-	request := data.Request{
-		URL: "https://df.dv/" + shortened + "/",
+	dbConfirmChan := make(chan bool, 1)
+	db.Store(longURL, shortened, dbConfirmChan)
+	<-dbConfirmChan
+	close(dbConfirmChan)
+
+	RetrieveFullURLHandler(writer, request)
+
+	if writer.Code != http.StatusOK {
+		t.Fatalf("Bad response from handler: %v", writer.Code)
 	}
 
-	body, err := json.Marshal(request)
+	response, err := ioutil.ReadAll(writer.Body)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	resp, err := cl.Post(ts.URL, "application/json", bytes.NewBuffer(body))
-	if err != nil {
-		t.Fatalf("Error sending request: %v", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("Bad response from handler: %v", resp.StatusCode)
-	}
-
 	var result data.Response
-	err = json.NewDecoder(resp.Body).Decode(&result)
+	err = json.Unmarshal(response, &result)
 	if err != nil {
 		t.Fatalf("Error decoding body: %v", err)
 	}
-	resp.Body.Close()
 
 	if result.LongURL != longURL {
 		t.Fatalf("Result mismatch, stored URL is: %v", result.LongURL)
 	}
 }
 
+// Apparently this function just can't be benchmarked; I couldn't find a fix for this at all.
 func Benchmark_RetrieveFullURLHandler(b *testing.B) {
 	ts := httptest.NewServer(http.HandlerFunc(RetrieveFullURLHandler))
 	defer ts.Close()
-
-	longURL := "https://www.lush.com/uk/en/p/good-karma-everybody-needs-some-shower-gel"
-	shortened := app.URLShortener()
-
-	db.Store(longURL, shortened)
-
-	request := data.Request{
-		URL: "https://df.dv/" + shortened + "/",
-	}
-
-	body, err := json.Marshal(request)
-	if err != nil {
-		b.Fatal(err)
-	}
 
 	tr := &http.Transport{}
 	defer tr.CloseIdleConnections()
@@ -140,13 +128,25 @@ func Benchmark_RetrieveFullURLHandler(b *testing.B) {
 		Transport: tr,
 	}
 
-	b.ResetTimer()
+	longURL := "https://www.lush.com/uk/en/p/good-karma-everybody-needs-some-shower-gel"
+	shortened := "1234567890abcdef"
 
+	dbConfirmChan := make(chan bool, 1)
+	db.Store(longURL, shortened, dbConfirmChan)
+	<-dbConfirmChan
+	close(dbConfirmChan)
+
+	request := fmt.Sprintf("%s/%s", ts.URL, shortened)
+	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		resp, err := cl.Post(ts.URL, "application/json", bytes.NewBuffer(body))
+		resp, err := cl.Get(request)
 		if err != nil {
-			b.Fatalf("Post: %v", err)
+			b.Fatalf("Error making get request: %v", err)
 		}
-		resp.Body.Close()
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			b.Fatal()
+		}
 	}
 }

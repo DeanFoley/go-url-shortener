@@ -1,4 +1,4 @@
-package handlers
+package api
 
 import (
 	"encoding/json"
@@ -26,9 +26,21 @@ func ShortenURLHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	shortenedLink := app.URLShortener()
+	shortenedLinkChan := make(chan string, 1)
+	var shortenedLink string
+	for {
+		go app.URLShortener(shortenedLinkChan)
+		shortenedLink = <-shortenedLinkChan
 
-	go db.Store(request.URL, shortenedLink)
+		dbConfirmChan := make(chan bool, 1)
+		go db.Store(request.URL, shortenedLink, dbConfirmChan)
+		result := <-dbConfirmChan
+		if result {
+			close(shortenedLinkChan)
+			close(dbConfirmChan)
+			break
+		}
+	}
 
 	var response = data.Response{
 		LongURL:  request.URL,

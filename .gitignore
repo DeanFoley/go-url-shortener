@@ -4,5 +4,5 @@
 
 # Builds
 cmd/*
-!cmd/handlers
+!cmd/api
 !cmd/*.go

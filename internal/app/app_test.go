@@ -20,13 +20,19 @@ func Test_StripURL(t *testing.T) {
 			testURL:        "1234567890abcdef/",
 			expectedResult: "1234567890abcdef",
 		},
+		{
+			testName:       "Garbage",
+			testURL:        "123456789/#0abcdef",
+			expectedResult: "1234567890abcdef",
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
-			testURL := "https://df.dv/" + tt.testURL
-
-			strippedURL := StripURL(testURL)
+			stripChan := make(chan string, 1)
+			StripURL(tt.testURL, stripChan)
+			strippedURL := <-stripChan
+			close(stripChan)
 
 			if strippedURL != tt.expectedResult {
 				t.Fatalf("URL has not been stripped properly: expected %s, got %s", tt.expectedResult, strippedURL)
@@ -38,14 +44,25 @@ func Test_StripURL(t *testing.T) {
 func Benchmark_StripURL(b *testing.B) {
 	testURL := "https://df.dv/1234567890abcdef/"
 
+	stripChan := make(chan string, 1)
+
+	go func() {
+		for {
+			<-stripChan
+		}
+	}()
+
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		StripURL(testURL)
+		StripURL(testURL, stripChan)
 	}
 }
 
 func Test_URLShortener(t *testing.T) {
-	shortened := URLShortener()
+	shortenedChan := make(chan string, 1)
+	URLShortener(shortenedChan)
+	shortened := <-shortenedChan
+	close(shortenedChan)
 
 	if len(shortened) > 16 || len(shortened) < 16 {
 		t.Fatalf("Generated URL is wrong length: %v", len(shortened))
@@ -53,45 +70,58 @@ func Test_URLShortener(t *testing.T) {
 }
 
 func Benchmark_URLShortener(b *testing.B) {
+	shortenedChan := make(chan string, 1)
+	go func() {
+		for {
+			<-shortenedChan
+		}
+	}()
+
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		URLShortener()
+		URLShortener(shortenedChan)
 	}
 }
 
 func Test_ValidateShortURL_Valid(t *testing.T) {
 	testURL := "https://df.dv/1234567890abcdef/"
-
 	baseURL := "https://df.dv/"
 
-	err := ValidateShortURL(baseURL, testURL)
+	errorChan := make(chan error, 1)
+	ValidateShortURL(baseURL, testURL, errorChan)
 
-	if err != nil {
+	if err := <-errorChan; err != nil {
 		t.Fatalf("Test failure: got %q", err)
-
 	}
+	close(errorChan)
 }
 
 func Test_ValidateShortURL_Invalid(t *testing.T) {
 	testURL := "https://goo.gl/1234567890abcdef/"
-
 	baseURL := "https://df.dv/"
 
-	err := ValidateShortURL(baseURL, testURL)
+	errorChan := make(chan error, 1)
+	ValidateShortURL(baseURL, testURL, errorChan)
 
-	if err == nil {
+	if err := <-errorChan; err == nil {
 		t.Fatalf("Test failure: got %q", err)
-
 	}
+	close(errorChan)
 }
 
-func Benchmark_ValidateURL(b *testing.B) {
+func Benchmark_ValidateShortURL(b *testing.B) {
 	testURL := "https://df.dv/1234567890abcdef/"
-
 	baseURL := "https://df.dv/"
+
+	errorChan := make(chan error, 1)
+	go func() {
+		for {
+			<-errorChan
+		}
+	}()
 
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		ValidateShortURL(baseURL, testURL)
+		ValidateShortURL(baseURL, testURL, errorChan)
 	}
 }

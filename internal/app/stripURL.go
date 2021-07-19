@@ -1,8 +1,20 @@
 package app
 
-func StripURL(url string) string {
-	if url[len(url)-1] == '/' {
-		return url[len(url)-17 : len(url)-1]
+import (
+	"log"
+	"regexp"
+)
+
+var pattern *regexp.Regexp
+
+func init() {
+	var err error
+	pattern, err = regexp.Compile("[^a-zA-z0-9]+")
+	if err != nil {
+		log.Fatal(err)
 	}
-	return url[len(url)-16:]
+}
+
+func StripURL(url string, result chan string) {
+	result <- pattern.ReplaceAllString(url, "")
 }
