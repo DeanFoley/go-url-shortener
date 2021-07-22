@@ -1,22 +1,106 @@
-# Go URL Shortener
+# go-url-shortener
 
-## Stated Objectives
+go-url-shortener allows you to create short URLs to redirect to any fully-qualified URL, and retrieve the referrals by simply querying the shortened URL.
 
-Write an API for a URL shortener which satisfies the following behaviour:
+* Shortens any URL to a 12-characdter re-direct.
+* Retrieves the fully-qualified URL for any short URL.
+* Accessible via RESTful interface or with provided CLI tool.
 
-* Accepts a URL to be shortened
-* Generates a short URL for the original URL
-* Accepts a short URL and redirects the user to the original URL
+## Building & Running
 
-### Bonus
+For the API:
 
-Comes with a CLI which can be used to call your service.
+```bash
+cd ./cmd && go build -o <name> && ./<name>
+```
 
-## Things We'd Like To See
+For the CLI:
 
-* Sound design approach; not over-complicated or over-engineered.
-* Code that's easy to read; not "clever".
-* Sensible tests in place.
+```bash
+cd .cmd/cli && go build -o <name> && ./<name> <command> <params>
+```
+
+## API Interface
+
+### Shorten
+
+Accessed via:
+
+```
+POST /shorten/
+```
+
+#### Request 
+
+```json
+{
+    "url": "https://www.lush.com/uk/en/p/good-karma-everybody-needs-some-shower-gel",
+}
+```
+
+#### Response
+
+```json
+{
+    "longURL": "https://www.lush.com/uk/en/p/good-karma-everybody-needs-some-shower-gel",
+    "shortURL": "https://df.dv/9UhhRFxVDElPV06C",
+}
+```
+
+### Longen
+
+Accessed via:
+
+```
+GET /
+```
+
+#### Request
+
+```
+GET https://df.dv/9UhhRFxVDElPV06C
+```
+
+#### Response
+
+```json
+{
+    "longURL": "https://www.lush.com/uk/en/p/good-karma-everybody-needs-some-shower-gel",
+    "shortURL": "https://df.dv/9UhhRFxVDElPV06C",
+}
+```
+
+## CLI Commands
+
+The CLI tool supports both shortening and longening of URLs, accessible by running it in one of the two following ways.
+
+### Shorten
+
+#### Request
+
+```bash
+./cli shorten -shorten-URL=https://www.lush.com/uk/en/p/good-karma-everybody-needs-some-shower-gel
+```
+
+#### Response
+
+```bash
+https://df.dv/9UhhRFxVDElPV06C
+```
+
+### Longen
+
+#### Request
+
+```bash
+./cli longen -longen-URL=kSDOejD9yPsuKRuO
+```
+
+#### Response
+
+```bash
+https://www.lush.com/uk/en/p/good-karma-everybody-needs-some-shower-gel
+```
 
 ## Benchmarks
 

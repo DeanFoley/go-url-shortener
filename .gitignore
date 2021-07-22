@@ -4,5 +4,10 @@
 
 # Builds
 cmd/*
+cmd/cli/*
 !cmd/api
+!cmd/cli
+
+# Code
 !cmd/*.go
+!cmd/cli/*.go
