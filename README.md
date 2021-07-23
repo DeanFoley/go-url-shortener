@@ -109,7 +109,7 @@ https://www.lush.com/uk/en/p/good-karma-everybody-needs-some-shower-gel
 | handler name | ns/op | bytes/op | allocs/op |
 |----|----|----|----|
 | shortenURLHandler | 259277 | 18716 | 136 |
-| retrieveURLHandler | 289681 | 18245 | 131 |
+| retrieveURLHandler | 289681 | 18245 | 131 | // out of date as the benchmark now cannot run
 
 ### App
 
@@ -118,3 +118,10 @@ https://www.lush.com/uk/en/p/good-karma-everybody-needs-some-shower-gel
 | stripURL | 2854 | 105 | 0 |
 | urlShortener | 705.7 | 16 | 1 |
 | validateShortURL | 226.2 | 0 | 0 |
+
+### DB
+
+| db operation | ns/op | bytes/op | allocs/op |
+|----|----|----|----|
+| Store | 1786 | 230 | 2 |
+| Retrieve | 1397 | 224 | 3 |

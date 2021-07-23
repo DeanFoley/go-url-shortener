@@ -42,6 +42,11 @@ func RetrieveFullURLHandler(w http.ResponseWriter, r *http.Request) {
 	longURL := <-longURLChan
 	close(longURLChan)
 
+	if !longURL.Result {
+		http.Error(w, "No URL found for key.", http.StatusNotFound)
+		return
+	}
+
 	var response = data.Response{
 		LongURL:  longURL.LongURL,
 		ShortURL: shortURL,

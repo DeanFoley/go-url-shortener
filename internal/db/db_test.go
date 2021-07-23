@@ -51,7 +51,7 @@ func Test_Retrieve(t *testing.T) {
 	result := <-resultChan
 
 	if result.LongURL != longURL {
-		t.Fatalf("Result not stored properly: expected %s got %s", longURL, result)
+		t.Fatalf("Result not stored properly: expected %s got %s", longURL, result.LongURL)
 	}
 }
 

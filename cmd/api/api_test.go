@@ -48,10 +48,22 @@ func Test_ShortenURLHandler(t *testing.T) {
 	ShortenURLHandler(writer, req)
 
 	resp := writer.Result()
+	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("Bad response from handler: %v", resp.StatusCode)
 	}
+
+	output, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var result data.Response
+	err = json.Unmarshal(output, &result)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(result)
 }
 
 func Benchmark_ShortenURLHandler(b *testing.B) {

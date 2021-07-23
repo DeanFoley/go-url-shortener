@@ -40,11 +40,12 @@ func ShortenURLHandler(w http.ResponseWriter, r *http.Request) {
 			close(dbConfirmChan)
 			break
 		}
+		close(dbConfirmChan)
 	}
 
 	var response = data.Response{
 		LongURL:  request.URL,
-		ShortURL: BaseURL + shortenedLink,
+		ShortURL: fmt.Sprintf("%s/%s", BaseURL, shortenedLink),
 	}
 
 	jsonRes, err := json.Marshal(response)
